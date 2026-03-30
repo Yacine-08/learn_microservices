@@ -1,0 +1,13 @@
+spring:
+  application:
+    name: config-server
+  profiles:
+    active: native
+  cloud:
+    config:
+      server:
+        native:
+          # where config-server is going to fetch all the config that we want
+          search-locations: classpath:/configurations
+server:
+  port: 8888

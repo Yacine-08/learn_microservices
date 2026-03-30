@@ -1,0 +1,18 @@
+spring:
+  application:
+    name: discovery
+  # Tell eureka to read the configuration from the config server
+  # optional means if this microservice doesn't find the configuration of the config server it will not fail to start up
+#  config:
+#    # port sur lequel tourne le config server
+#    import: optional:configserver:http://localhost:8888
+eureka:
+  instance:
+    hostname: localhost
+  client:
+    register-with-eureka: false # eureka n'a pas besoin de s'enregistrer parce qu'il represente le discovery server
+    fetch-registry: false
+    service-url:
+      defaultZone: http://${eureka.instance.hostname}:${server.port}/eureka
+server:
+  port: 8761
