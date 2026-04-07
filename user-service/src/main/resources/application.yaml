@@ -1,0 +1,49 @@
+server:
+  port: 8071
+
+spring:
+  application:
+    name: user-service
+  cloud:
+    config:
+      enabled: false
+  datasource:
+    url: jdbc:postgresql://localhost:5432/user_db
+    username: Yacine
+    password:
+    driver-class-name: org.postgresql.Driver
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: true
+    properties:
+      hibernate:
+        format_sql: true
+    database: postgresql
+    database-platform: org.hibernate.dialect.PostgreSQLDialect
+  kafka:
+    bootstrap-servers: localhost:9092
+    consumer:
+      group-id: user-service-group
+      auto-offset-reset: earliest
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.apache.kafka.common.serialization.JsonDeserializer
+      properties:
+        spring.json.trusted.packages: "sn.edu.ept.user_service.*"
+        spring.json.value.default.type: "sn.edu.ept.user_service.user.UserRegisteredEvent"
+      # Garantit qu'un message raté ne bloque pas les suivants
+      enable-auto-commit: false
+    listener:
+      ack-mode: MANUAL_IMMEDIATE
+
+eureka:
+  client:
+    service-url:
+      defaultZone: http://localhost:8761/eureka/
+    register-with-eureka: true
+    fetch-registry: true
+
+logging:
+  level:
+    sn.edu.ept.user_service: DEBUG
+    org.springframework.kafka: DEBUG
