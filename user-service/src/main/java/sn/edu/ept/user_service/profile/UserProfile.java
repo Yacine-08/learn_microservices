@@ -31,12 +31,13 @@ public class UserProfile {
     @Column(name = "lastname", nullable = false)
     private String lastname;
 
-    @Column(name = "email", unique = true, nullable = false)
+    @Column(name = "email", nullable = false)
     private String email;
     
     @Column(name = "phone")
     private String phone;
 
+    @Enumerated(EnumType.STRING)
     private Role role;
 
     @Column(name = "created_at", nullable = false, updatable = false)

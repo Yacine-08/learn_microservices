@@ -30,7 +30,8 @@ spring:
       value-deserializer: org.apache.kafka.common.serialization.JsonDeserializer
       properties:
         spring.json.trusted.packages: "sn.edu.ept.user_service.*"
-        spring.json.value.default.type: "sn.edu.ept.user_service.user.UserRegisteredEvent"
+#        spring.json.value.default.type: "sn.edu.ept.user_service.user.UserRegisteredEvent"
+        spring.json.value.default.type: "sn.edu.ept.user_service.event.UserRegisteredEvent"
       # Garantit qu'un message raté ne bloque pas les suivants
       enable-auto-commit: false
     listener:
