@@ -35,6 +35,16 @@ spring:
 #    register-with-eureka: true
 #    fetch-registry: true
 
+user:
+  service:
+    url: http://localhost:8071
+
+# Kafka topics for user info communication
+kafka:
+  topic:
+    user-info-request: user-info-request
+    user-info-response: user-info-response
+
 logging:
   level:
     sn.edu.ept.security: DEBUG

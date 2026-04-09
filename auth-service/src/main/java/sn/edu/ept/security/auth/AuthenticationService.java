@@ -1,23 +1,26 @@
 package sn.edu.ept.security.auth;
 
 import lombok.RequiredArgsConstructor;
-import org.jspecify.annotations.Nullable;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import sn.edu.ept.security.client.UserServiceClient;
 import sn.edu.ept.security.config.JwtService;
-import sn.edu.ept.security.dtos.AuthenticationRequest;
-import sn.edu.ept.security.dtos.AuthenticationResponse;
-import sn.edu.ept.security.dtos.RegisterRequest;
+import sn.edu.ept.security.dtos.*;
 import sn.edu.ept.security.exception.EmailAlreadyExistsException;
 import sn.edu.ept.security.user.Role;
 import sn.edu.ept.security.user.User;
 import sn.edu.ept.security.user.UserRegisteredEvent;
 import sn.edu.ept.security.user.UserRepository;
 
-import java.util.List;
+import java.time.LocalDateTime;
+import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.stream.Collectors;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class AuthenticationService {
@@ -27,6 +30,10 @@ public class AuthenticationService {
     private final JwtService jwtService;
     private final AuthenticationManager authenticationManager;
     private final AuthEventPublisher authEventPublisher;
+    private final UserServiceClient userServiceClient;
+    
+    // Suivi des utilisateurs connectés
+    private final Map<String, LocalDateTime> connectedUsers = new ConcurrentHashMap<>();
 
 
     // save credentials in auth_db
@@ -42,6 +49,8 @@ public class AuthenticationService {
                 .email(request.email)
                 .password(passwordEncoder.encode(request.password))
                 .role(request.role != null ? request.getRole() : Role.CLIENT)
+                .firstname(request.firstname)
+                .lastname(request.lastname)
                 .build();
         User savedUser = userRepository.save(user);
 
@@ -84,7 +93,74 @@ public class AuthenticationService {
                 .build();
     }
 
-    public @Nullable List<User> getAllUsers() {
-        return userRepository.findAll();
+    public List<UserDTO> getAllUsers() {
+
+        // recuperer les credentials depuis auth_db
+        List<User> authUsers = userRepository.findAll();
+
+        if (authUsers.isEmpty()) {
+            return List.of();
+        }
+
+        // extraire tous les authIds
+        List<Long> authIds = authUsers.stream()
+                .map(User::getId)
+                .toList();
+
+        List<UserProfilDTO> profils = List.of();
+        try {
+            profils = userServiceClient.getProfilsByAuthIds(authIds);
+        } catch (Exception e) {
+            log.warn("[AUTH] user-service indisponible, réponse partielle : {}",
+                    e.getMessage());
+        }
+
+        // fusion
+        Map<Long, UserProfilDTO> profilsMap = profils.stream()
+                .collect(Collectors.toMap(
+                        UserProfilDTO::getAuthId,
+                        p -> p,
+                        (a, b) -> a
+                ));
+
+        return authUsers.stream()
+                .map(user -> {
+                    UserProfilDTO profil = profilsMap.get(user.getId());
+                    return buildUserComplet(user, profil);
+                })
+                .toList();
+    }
+
+    public UserDTO getUserById(Long authId) {
+        User user = userRepository.findById(authId)
+                .orElseThrow(() -> new RuntimeException(
+                        "Utilisateur introuvable id=" + authId));
+
+        UserProfilDTO profil = null;
+        try {
+            profil = userServiceClient.getProfilByAuthId(authId);
+        } catch (Exception e) {
+            log.warn("[AUTH] Profil non récupéré pour authId={} : {}",
+                    authId, e.getMessage());
+        }
+
+        return buildUserComplet(user, profil);
+    }
+
+    private UserDTO buildUserComplet(User user, UserProfilDTO profil) {
+        UserDTO.UserDTOBuilder builder = UserDTO.builder()
+                .authId(user.getId())
+                .email(user.getEmail())
+                .role(user.getRole().name())
+                .createdAt(user.getCreatedAt());
+
+        if (profil != null) {
+            builder
+                    .firstname(profil.getFirstname())
+                    .lastname(profil.getLastname())
+                    .phone(profil.getPhone());
+        }
+
+        return builder.build();
     }
 }

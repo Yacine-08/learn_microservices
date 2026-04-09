@@ -23,10 +23,15 @@ public class SecurityConfig {
         http
             .csrf(csrf -> csrf.disable())
             .authorizeHttpRequests(auth -> auth
-                            .requestMatchers("/help/**").permitAll()                     .requestMatchers("/swagger-ui/**").permitAll()
+                            .requestMatchers("/help/**").permitAll()
+                            .requestMatchers("/swagger-ui/**").permitAll()
                             .requestMatchers("/v3/api-docs/**").permitAll()
                             .requestMatchers("/swagger-ui").permitAll()
-                            .requestMatchers("/api/auth/**").permitAll()
+                            .requestMatchers("/api/auth/login").permitAll()
+                            .requestMatchers("/api/auth/register").permitAll()
+                            .requestMatchers("/api/auth/me").authenticated()
+                            .requestMatchers("/api/auth/users/me").authenticated()
+                            .requestMatchers("/api/auth/users/connected").hasRole("ADMIN")
                             .anyRequest().authenticated()
             )
             .sessionManagement(session -> session
