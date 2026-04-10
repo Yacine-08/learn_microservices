@@ -31,6 +31,7 @@ public class SecurityConfig {
                             .requestMatchers("/api/auth/register").permitAll()
                             .requestMatchers("/api/auth/me").authenticated()
                             .requestMatchers("/api/auth/users/me").authenticated()
+                            .requestMatchers("/api/auth/change-password").authenticated()
                             .requestMatchers("/api/auth/users/connected").hasRole("ADMIN")
                             .anyRequest().authenticated()
             )

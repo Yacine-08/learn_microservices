@@ -7,6 +7,7 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import sn.edu.ept.security.dtos.AuthenticationRequest;
 import sn.edu.ept.security.dtos.AuthenticationResponse;
+import sn.edu.ept.security.dtos.ChangePasswordRequest;
 import sn.edu.ept.security.dtos.RegisterRequest;
 import sn.edu.ept.security.dtos.UserDTO;
 import sn.edu.ept.security.service.ConnectedUserService;
@@ -68,6 +69,23 @@ public class AuthenticationController {
         response.put("isAuthenticated", authentication.isAuthenticated());
         
         return ResponseEntity.ok(response);
+    }
+
+    @PutMapping("/change-password")
+    public ResponseEntity<Map<String, String>> changePassword(@RequestBody ChangePasswordRequest request) {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        String userEmail = authentication.getName();
+        
+        try {
+            authenticationService.changePassword(userEmail, request);
+            Map<String, String> response = new HashMap<>();
+            response.put("message", "Mot de passe modifié avec succès");
+            return ResponseEntity.ok(response);
+        } catch (IllegalArgumentException e) {
+            Map<String, String> errorResponse = new HashMap<>();
+            errorResponse.put("error", e.getMessage());
+            return ResponseEntity.badRequest().body(errorResponse);
+        }
     }
 
 }
