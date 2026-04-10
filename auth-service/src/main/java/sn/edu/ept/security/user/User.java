@@ -42,6 +42,9 @@ public class User implements UserDetails {
     @Column(name = "lastname")
     private String lastname;
 
+    @Column(name = "phone")
+    private String phone;
+
     @Column(name = "created_at", updatable = false)
     private LocalDateTime createdAt;
 
