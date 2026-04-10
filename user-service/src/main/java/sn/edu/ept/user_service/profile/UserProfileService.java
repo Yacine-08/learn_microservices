@@ -2,11 +2,13 @@ package sn.edu.ept.user_service.profile;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import sn.edu.ept.user_service.dto.UpdateProfileRequest;
 import sn.edu.ept.user_service.dto.UserProfileResponse;
 import sn.edu.ept.user_service.event.UserRegisteredEvent;
+import sn.edu.ept.user_service.event.UserUpdatedEvent;
 import sn.edu.ept.user_service.exception.ProfilAlreadyExistException;
 import sn.edu.ept.user_service.exception.ProfilNotFoundException;
 
@@ -19,6 +21,9 @@ import java.util.Optional;
 public class UserProfileService {
 
     private final UserProfileRepository userRepository;
+    private final KafkaTemplate<String, Object> kafkaTemplate;
+
+    private static final String USER_UPDATED_TOPIC = "user-updated";
 
     @Transactional
     public UserProfile createUser(UserRegisteredEvent event) {
@@ -62,7 +67,22 @@ public class UserProfileService {
             profil.setPhone(request.getPhone());
         }
 
-        return UserProfileResponse.from(userRepository.save(profil));
+        UserProfile updatedProfile = userRepository.save(profil);
+        
+        // Publier l'événement de mise à jour pour auth-service
+        UserUpdatedEvent event = new UserUpdatedEvent(
+                updatedProfile.getAuthId(),
+                updatedProfile.getFirstname(),
+                updatedProfile.getLastname(),
+                updatedProfile.getEmail(),
+                updatedProfile.getPhone(),
+                updatedProfile.getRole() != null ? updatedProfile.getRole().name() : null
+        );
+        
+        kafkaTemplate.send(USER_UPDATED_TOPIC, event);
+        log.info("Published user updated event for authId: {}", authId);
+
+        return UserProfileResponse.from(updatedProfile);
     }
 
     @Transactional

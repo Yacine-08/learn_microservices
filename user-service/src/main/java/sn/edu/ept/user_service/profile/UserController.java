@@ -38,7 +38,6 @@ public class UserController {
         return ResponseEntity.ok(userService.updateUser(authId, request));
     }
 
-    // Get user by id - admin only
     @GetMapping("/{id}")
     public ResponseEntity<UserProfileResponse> getUserById(
             @PathVariable Long id,

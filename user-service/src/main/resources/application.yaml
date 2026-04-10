@@ -23,15 +23,21 @@ spring:
     database-platform: org.hibernate.dialect.PostgreSQLDialect
   kafka:
     bootstrap-servers: localhost:9092
+    producer:
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
+      properties:
+        spring.json.add.type.headers: false
+      retries: 3
+      acks: all
     consumer:
       group-id: user-service-group
       auto-offset-reset: earliest
       key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
       value-deserializer: org.apache.kafka.common.serialization.JsonDeserializer
       properties:
-        spring.json.trusted.packages: "sn.edu.ept.user_service.*"
-#        spring.json.value.default.type: "sn.edu.ept.user_service.user.UserRegisteredEvent"
-        spring.json.value.default.type: "sn.edu.ept.user_service.event.UserRegisteredEvent"
+        json.trusted.packages: "sn.edu.ept.user_service.*"
+        json.value.default.type: "sn.edu.ept.user_service.event.UserRegisteredEvent"
       # Garantit qu'un message raté ne bloque pas les suivants
       enable-auto-commit: false
     listener:

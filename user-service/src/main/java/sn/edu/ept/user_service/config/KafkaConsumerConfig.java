@@ -10,7 +10,8 @@ import org.springframework.kafka.config.ConcurrentKafkaListenerContainerFactory;
 import org.springframework.kafka.core.ConsumerFactory;
 import org.springframework.kafka.core.DefaultKafkaConsumerFactory;
 import org.springframework.kafka.listener.ContainerProperties;
-import org.springframework.kafka.support.serializer.JsonDeserializer;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import org.apache.kafka.common.serialization.Deserializer;
 import sn.edu.ept.user_service.event.UserRegisteredEvent;
 
 import java.util.HashMap;
@@ -22,26 +23,44 @@ public class KafkaConsumerConfig {
     @Value("${spring.kafka.bootstrap-servers}")
     private String bootstrapServers;
 
+    // Custom Jackson-based JSON deserializer
+    public static class JacksonDeserializer<T> implements Deserializer<T> {
+        private final ObjectMapper objectMapper = new ObjectMapper();
+        private Class<T> targetType;
+
+        public JacksonDeserializer() {}
+
+        public JacksonDeserializer(Class<T> targetType) {
+            this.targetType = targetType;
+        }
+
+        @Override
+        public void configure(Map<String, ?> configs, boolean isKey) {
+            // Configuration can be done here if needed
+        }
+
+        @Override
+        public T deserialize(String topic, byte[] data) {
+            if (data == null) {
+                return null;
+            }
+            try {
+                return objectMapper.readValue(data, targetType);
+            } catch (Exception e) {
+                throw new RuntimeException("Error deserializing JSON object", e);
+            }
+        }
+    }
+
     @Bean
     public ConsumerFactory<String, UserRegisteredEvent> consumerFactory() {
-        JsonDeserializer<UserRegisteredEvent> deserializer =
-                new JsonDeserializer<>(UserRegisteredEvent.class, false);
-        deserializer.addTrustedPackages("sn.edu.ept.user_service.*");
-
         Map<String, Object> config = new HashMap<>();
         config.put(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG,  bootstrapServers);
         config.put(ConsumerConfig.GROUP_ID_CONFIG,            "user-service-group");
         config.put(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG,   "earliest");
         config.put(ConsumerConfig.ENABLE_AUTO_COMMIT_CONFIG,  false);
-        config.put(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG,
-                StringDeserializer.class);
-        config.put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG,
-                JsonDeserializer.class);
 
-        return new DefaultKafkaConsumerFactory<>(
-                config,
-                new StringDeserializer(),
-                deserializer);
+        return new DefaultKafkaConsumerFactory<>(config, new StringDeserializer(), new JacksonDeserializer<>(UserRegisteredEvent.class));
     }
 
     @Bean
