@@ -12,7 +12,7 @@ import java.util.List;
 // communication via OpenFeign pour recuperer les donnees
 @FeignClient(
         name     = "user-service",
-        url      = "http://localhost:8071",
+        url      = "http://localhost:8082",
         fallback = UserServiceClientFallback.class   // fallback si user-service est down
 )
 public interface UserServiceClient {

@@ -1,5 +1,5 @@
 server:
-  port: 8070
+  port: 8081
 
 spring:
   application:
@@ -37,7 +37,7 @@ spring:
 
 user:
   service:
-    url: http://localhost:8071
+    url: http://localhost:8081
 
 # Kafka topics for user info communication
 kafka:
