@@ -44,6 +44,7 @@ kafka:
   topic:
     user-info-request: user-info-request
     user-info-response: user-info-response
+    user-deleted: user-deleted
 
 logging:
   level:

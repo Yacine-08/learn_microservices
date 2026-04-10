@@ -25,4 +25,9 @@ public class ConnectedUserService {
     public int getConnectedUsersCount() {
         return connectedUsers.size();
     }
+
+    public void removeUserConnection(String email) {
+        connectedUsers.remove(email);
+        log.info("User disconnected: {} at {}", email, LocalDateTime.now());
+    }
 }

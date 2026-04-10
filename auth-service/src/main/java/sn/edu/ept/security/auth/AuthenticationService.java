@@ -10,10 +10,7 @@ import sn.edu.ept.security.client.UserServiceClient;
 import sn.edu.ept.security.config.JwtService;
 import sn.edu.ept.security.dtos.*;
 import sn.edu.ept.security.exception.EmailAlreadyExistsException;
-import sn.edu.ept.security.user.Role;
-import sn.edu.ept.security.user.User;
-import sn.edu.ept.security.user.UserRegisteredEvent;
-import sn.edu.ept.security.user.UserRepository;
+import sn.edu.ept.security.user.*;
 
 import java.time.LocalDateTime;
 import java.util.*;
@@ -41,8 +38,8 @@ public class AuthenticationService {
     // return token
     public AuthenticationResponse register(RegisterRequest request) {
 
-        if (userRepository.existsByEmailAndRole(request.getEmail(), request.getRole())) {
-            throw new EmailAlreadyExistsException("Un compte avec cet email et ce rôle existe déjà");
+        if (userRepository.existsByEmail(request.getEmail())) {
+            throw new EmailAlreadyExistsException("Un compte avec cet email");
         }
         
         var user = User.builder()
@@ -186,4 +183,5 @@ public class AuthenticationService {
 
         log.info("Password changed for user: {}", email);
     }
+
 }

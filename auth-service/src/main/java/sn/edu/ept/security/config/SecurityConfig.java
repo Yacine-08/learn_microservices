@@ -32,7 +32,9 @@ public class SecurityConfig {
                             .requestMatchers("/api/auth/me").authenticated()
                             .requestMatchers("/api/auth/users/me").authenticated()
                             .requestMatchers("/api/auth/change-password").authenticated()
+                            .requestMatchers("/api/auth/logout").authenticated()
                             .requestMatchers("/api/auth/users/connected").hasRole("ADMIN")
+                            .requestMatchers("/api/auth/users").hasRole("ADMIN")
                             .anyRequest().authenticated()
             )
             .sessionManagement(session -> session

@@ -11,7 +11,6 @@ import sn.edu.ept.security.dtos.ChangePasswordRequest;
 import sn.edu.ept.security.dtos.RegisterRequest;
 import sn.edu.ept.security.dtos.UserDTO;
 import sn.edu.ept.security.service.ConnectedUserService;
-import sn.edu.ept.security.user.User;
 
 import java.util.HashMap;
 import java.util.List;
@@ -87,5 +86,18 @@ public class AuthenticationController {
             return ResponseEntity.badRequest().body(errorResponse);
         }
     }
+
+    @PostMapping("/logout")
+    public ResponseEntity<Map<String, String>> logout() {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        String userEmail = authentication.getName();
+
+        connectedUserService.removeUserConnection(userEmail);
+        
+        Map<String, String> response = new HashMap<>();
+        response.put("message", "Déconnexion réussie");
+        return ResponseEntity.ok(response);
+    }
+
 
 }
