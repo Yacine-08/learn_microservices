@@ -63,7 +63,7 @@ public class AuthenticationService {
 
         return AuthenticationResponse.builder()
                 .message("Compte créé avec succès")
-                .accessToken(jwtService.generateToken(savedUser))
+                .accessToken(jwtService.generateTokenWithClaims(savedUser, savedUser.getId(), savedUser.getRole().name()))
                 .refreshToken(jwtService.generateRefreshToken(savedUser))
                 .role(savedUser.getRole().name())
                 .authId(savedUser.getId())
@@ -83,7 +83,7 @@ public class AuthenticationService {
 
         return AuthenticationResponse.builder()
                 .message("Connexion réussie")
-                .accessToken(jwtService.generateToken(user))
+                .accessToken(jwtService.generateTokenWithClaims(user, user.getId(), user.getRole().name()))
                 .refreshToken(jwtService.generateRefreshToken(user))
                 .role(user.getRole().name())
                 .authId(user.getId())

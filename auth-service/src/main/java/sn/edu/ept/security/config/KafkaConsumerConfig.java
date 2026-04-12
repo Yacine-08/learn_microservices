@@ -12,6 +12,7 @@ import org.springframework.kafka.core.DefaultKafkaConsumerFactory;
 import org.springframework.kafka.listener.ContainerProperties;
 import org.springframework.kafka.support.serializer.JsonDeserializer;
 import sn.edu.ept.security.user.UserUpdatedEvent;
+import sn.edu.ept.security.event.UserDeletedEvent;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -55,6 +56,42 @@ public class KafkaConsumerConfig {
                 .setAckMode(ContainerProperties.AckMode.MANUAL_IMMEDIATE);
 
         factory.setConcurrency(2);
+
+        return factory;
+    }
+
+    @Bean
+    public ConsumerFactory<String, UserDeletedEvent> userDeletedEventConsumerFactory() {
+        JsonDeserializer<UserDeletedEvent> deserializer =
+                new JsonDeserializer<>(UserDeletedEvent.class, false);
+        deserializer.addTrustedPackages("sn.edu.ept.user_service.*");
+
+        Map<String, Object> config = new HashMap<>();
+        config.put(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, bootstrapServers);
+        config.put(ConsumerConfig.GROUP_ID_CONFIG, "auth-service-group");
+        config.put(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, "earliest");
+        config.put(ConsumerConfig.ENABLE_AUTO_COMMIT_CONFIG, false);
+        config.put(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class);
+        config.put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, JsonDeserializer.class);
+
+        return new DefaultKafkaConsumerFactory<>(
+                config,
+                new StringDeserializer(),
+                deserializer);
+    }
+
+    @Bean
+    public ConcurrentKafkaListenerContainerFactory<String, UserDeletedEvent>
+    userDeletedEventKafkaListenerContainerFactory() {
+
+        var factory = new ConcurrentKafkaListenerContainerFactory<String, UserDeletedEvent>();
+        factory.setConsumerFactory(userDeletedEventConsumerFactory());
+
+        // Acquittement manuel
+        factory.getContainerProperties()
+                .setAckMode(ContainerProperties.AckMode.MANUAL_IMMEDIATE);
+
+        factory.setConcurrency(1);
 
         return factory;
     }

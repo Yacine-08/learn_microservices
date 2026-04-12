@@ -7,6 +7,7 @@ import io.jsonwebtoken.io.Decoders;
 import io.jsonwebtoken.security.Keys;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
+import lombok.RequiredArgsConstructor;
 
 import java.security.Key;
 import java.util.Date;
@@ -15,9 +16,11 @@ import java.util.Map;
 import java.util.function.Function;
 
 @Service
+@RequiredArgsConstructor
 public class JwtService {
 
     private static final String SECRET_KEY = "f04f05344920d1531fdb13ff408d825c5cf5012354e64651c466d6cede25e082";
+    private final TokenBlacklistService tokenBlacklistService;
 
     public String extractUsername(String token) {
         return extractClaim(token, Claims::getSubject);
@@ -43,6 +46,15 @@ public class JwtService {
                 .compact();
     }
 
+    // generate token with user claims for microservices communication
+    public String generateTokenWithClaims(UserDetails userDetails, Long authId, String role) {
+        Map<String, Object> extraClaims = new HashMap<>();
+        extraClaims.put("authId", authId);
+        extraClaims.put("role", role);
+        
+        return generateToken(extraClaims, userDetails);
+    }
+
     // generate refresh token with longer expiration (7 days)
     public String generateRefreshToken(UserDetails userDetails) {
         return Jwts
@@ -55,6 +67,11 @@ public class JwtService {
     }
 
     public boolean isTokenValid(String token, UserDetails userDetails) {
+        // Check if token is blacklisted
+        if (tokenBlacklistService.isTokenBlacklisted(token)) {
+            return false;
+        }
+        
         final String username = extractUsername(token);
         return (username.equals(userDetails.getUsername()) && !isTokenExpired(token));
     }
@@ -63,7 +80,7 @@ public class JwtService {
         return extractExpiration(token).before(new Date());
     }
 
-    private Date extractExpiration(String token) {
+    public Date extractExpiration(String token) {
         return extractClaim(token, Claims::getExpiration);
     }
 

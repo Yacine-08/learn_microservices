@@ -45,7 +45,18 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
         // extract the token from the auth header
         jwt = authHeader.substring(7);
-        userEmail = jwtService.extractUsername(jwt);
+        
+        try {
+            userEmail = jwtService.extractUsername(jwt);
+        } catch (io.jsonwebtoken.ExpiredJwtException e) {
+            // Token expired - continue without authentication
+            filterChain.doFilter(request, response);
+            return;
+        } catch (io.jsonwebtoken.JwtException e) {
+            // Invalid token - continue without authentication
+            filterChain.doFilter(request, response);
+            return;
+        }
 
         // after extracting the jwt token, check if we have the user within our database or not
         // if we have the userEmail and user not authenticated

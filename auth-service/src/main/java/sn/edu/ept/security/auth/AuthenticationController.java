@@ -5,6 +5,8 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
+import sn.edu.ept.security.config.JwtService;
+import sn.edu.ept.security.config.TokenBlacklistService;
 import sn.edu.ept.security.dtos.AuthenticationRequest;
 import sn.edu.ept.security.dtos.AuthenticationResponse;
 import sn.edu.ept.security.dtos.ChangePasswordRequest;
@@ -12,6 +14,7 @@ import sn.edu.ept.security.dtos.RegisterRequest;
 import sn.edu.ept.security.dtos.UserDTO;
 import sn.edu.ept.security.service.ConnectedUserService;
 
+import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -23,6 +26,8 @@ public class AuthenticationController {
 
     private final AuthenticationService authenticationService;
     private final ConnectedUserService connectedUserService;
+    private final JwtService jwtService;
+    private final TokenBlacklistService tokenBlacklistService;
 
     @PostMapping("/register")
     public ResponseEntity<AuthenticationResponse> register(
@@ -36,38 +41,6 @@ public class AuthenticationController {
             @RequestBody AuthenticationRequest request
     ) {
         return ResponseEntity.ok(authenticationService.login(request));
-    }
-
-    @GetMapping("/users")
-    public ResponseEntity<List<UserDTO>> getAllUsers() {
-        return ResponseEntity.ok(authenticationService.getAllUsers());
-    }
-
-    @GetMapping("/users/{authId}")
-    public ResponseEntity<UserDTO> getUserById(
-            @PathVariable Long authId) {
-
-        return ResponseEntity.ok(authenticationService.getUserById(authId));
-    }
-
-    @GetMapping("/users/connected")
-    public ResponseEntity<Map<String, Object>> getConnectedUsers() {
-        Map<String, Object> response = new HashMap<>();
-        response.put("connectedUsers", connectedUserService.getConnectedUsers());
-        response.put("totalConnected", connectedUserService.getConnectedUsersCount());
-        
-        return ResponseEntity.ok(response);
-    }
-
-    @GetMapping("/me")
-    public ResponseEntity<Map<String, Object>> getCurrentUser() {
-        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        Map<String, Object> response = new HashMap<>();
-        response.put("username", authentication.getName());
-        response.put("authorities", authentication.getAuthorities());
-        response.put("isAuthenticated", authentication.isAuthenticated());
-        
-        return ResponseEntity.ok(response);
     }
 
     @PutMapping("/change-password")
@@ -88,11 +61,22 @@ public class AuthenticationController {
     }
 
     @PostMapping("/logout")
-    public ResponseEntity<Map<String, String>> logout() {
+    public ResponseEntity<Map<String, String>> logout(@RequestHeader("Authorization") String authHeader) {
+        // Extract token from Authorization header
+        String token = authHeader.substring(7); // Remove "Bearer " prefix
+        
+        // Blacklist the token
+        Date expirationDate = jwtService.extractExpiration(token);
+        tokenBlacklistService.blacklistToken(token, 
+            expirationDate.toInstant().atZone(java.time.ZoneId.systemDefault()).toLocalDateTime());
+        
+        // Remove user from connected users list
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         String userEmail = authentication.getName();
-
         connectedUserService.removeUserConnection(userEmail);
+        
+        // Clear security context
+        SecurityContextHolder.clearContext();
         
         Map<String, String> response = new HashMap<>();
         response.put("message", "Déconnexion réussie");
