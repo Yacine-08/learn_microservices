@@ -9,6 +9,8 @@ import sn.edu.ept.user_service.dto.UpdateProfileRequest;
 import sn.edu.ept.user_service.dto.UserProfileResponse;
 import sn.edu.ept.user_service.event.UserRegisteredEvent;
 import sn.edu.ept.user_service.event.UserUpdatedEvent;
+import sn.edu.ept.user_service.event.UserDeletedEvent;
+import sn.edu.ept.user_service.event.UserDeletedEventPublisher;
 import sn.edu.ept.user_service.exception.ProfilAlreadyExistException;
 import sn.edu.ept.user_service.exception.ProfilNotFoundException;
 
@@ -22,6 +24,7 @@ public class UserProfileService {
 
     private final UserProfileRepository userRepository;
     private final KafkaTemplate<String, Object> kafkaTemplate;
+    private final UserDeletedEventPublisher userDeletedEventPublisher;
 
     private static final String USER_UPDATED_TOPIC = "user-updated";
 
@@ -98,28 +101,24 @@ public class UserProfileService {
         return userRepository.findAll();
     }
 
-
-    public Optional<UserProfile> getUserByEmail(String email) {
-        log.debug("Fetching user by email: {}", email);
-        return userRepository.findByEmail(email);
-    }
-
-    public void deleteUser(Long id) {
-        log.debug("Deleting user with id: {}", id);
+    @Transactional
+    public void deleteUser(Long authId) {
+        log.debug("Deleting user with authId: {}", authId);
         
-        if (!userRepository.existsById(id)) {
-            throw new IllegalArgumentException("User not found with id: " + id);
-        }
+        UserProfile user = userRepository.findByAuthId(authId)
+                .orElseThrow(() -> new IllegalArgumentException("User not found with authId: " + authId));
         
-        userRepository.deleteById(id);
-        log.info("Successfully deleted user with id: {}", id);
+        // Publish deletion event to auth-service
+        UserDeletedEvent deletedEvent = new UserDeletedEvent(
+            user.getAuthId(),
+            user.getEmail(),
+            "Deleted from user-service"
+        );
+        userDeletedEventPublisher.publishUserDeleted(deletedEvent);
+        
+        // Delete user from user-service
+        userRepository.deleteByAuthId(authId);
+        log.info("Successfully deleted user with authId: {}", authId);
     }
 
-    public boolean existsByAuthId(Long authId) {
-        return userRepository.existsByAuthId(authId);
-    }
-
-    public boolean existsByEmail(String email) {
-        return userRepository.existsByEmail(email);
-    }
 }

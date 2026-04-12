@@ -50,6 +50,10 @@ eureka:
     register-with-eureka: true
     fetch-registry: true
 
+auth:
+  service:
+    url: http://localhost:8081
+
 logging:
   level:
     sn.edu.ept.user_service: DEBUG

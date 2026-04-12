@@ -11,6 +11,7 @@ import org.springframework.kafka.core.ProducerFactory;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.apache.kafka.common.serialization.Serializer;
 import sn.edu.ept.user_service.event.UserRegisteredEvent;
+import sn.edu.ept.user_service.event.UserDeletedEvent;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -48,6 +49,21 @@ public class KafkaProducerConfig {
     @Bean
     public KafkaTemplate<String, Object> kafkaTemplate() {
         return new KafkaTemplate<>(producerFactory());
+    }
+
+    @Bean
+    public ProducerFactory<String, UserDeletedEvent> userDeletedEventProducerFactory() {
+        Map<String, Object> config = new HashMap<>();
+        config.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, bootstrapServers);
+        config.put(ProducerConfig.RETRIES_CONFIG, 3);
+        config.put(ProducerConfig.ACKS_CONFIG, "all");
+
+        return new DefaultKafkaProducerFactory<>(config, new StringSerializer(), new JacksonSerializer<>());
+    }
+
+    @Bean
+    public KafkaTemplate<String, UserDeletedEvent> userDeletedEventKafkaTemplate() {
+        return new KafkaTemplate<>(userDeletedEventProducerFactory());
     }
 
 }
