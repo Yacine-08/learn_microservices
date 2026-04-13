@@ -35,10 +35,14 @@ public class UserProfileService {
             throw new ProfilAlreadyExistException("User with authId " + event.authId() + " already exists");
         }
 
+        // Validate and provide fallback values for null fields
+        String firstname = event.firstname() != null ? event.firstname() : "Unknown";
+        String lastname = event.lastname() != null ? event.lastname() : "User";
+
         var profil = UserProfile.builder()
                 .authId(event.authId())
-                .firstname(event.firstname())
-                .lastname(event.lastname())
+                .firstname(firstname)
+                .lastname(lastname)
                 .email(event.email())
                 .phone(event.phone())
                 .role(Role.valueOf(event.role()))
@@ -71,7 +75,7 @@ public class UserProfileService {
         }
 
         UserProfile updatedProfile = userRepository.save(profil);
-        
+
         // Publier l'événement de mise à jour pour auth-service
         UserUpdatedEvent event = new UserUpdatedEvent(
                 updatedProfile.getAuthId(),
@@ -81,7 +85,7 @@ public class UserProfileService {
                 updatedProfile.getPhone(),
                 updatedProfile.getRole() != null ? updatedProfile.getRole().name() : null
         );
-        
+
         kafkaTemplate.send(USER_UPDATED_TOPIC, event);
         log.info("Published user updated event for authId: {}", authId);
 
@@ -104,18 +108,18 @@ public class UserProfileService {
     @Transactional
     public void deleteUser(Long authId) {
         log.debug("Deleting user with authId: {}", authId);
-        
+
         UserProfile user = userRepository.findByAuthId(authId)
                 .orElseThrow(() -> new IllegalArgumentException("User not found with authId: " + authId));
-        
+
         // Publish deletion event to auth-service
         UserDeletedEvent deletedEvent = new UserDeletedEvent(
-            user.getAuthId(),
-            user.getEmail(),
-            "Deleted from user-service"
+                user.getAuthId(),
+                user.getEmail(),
+                "Deleted from user-service"
         );
         userDeletedEventPublisher.publishUserDeleted(deletedEvent);
-        
+
         // Delete user from user-service
         userRepository.deleteByAuthId(authId);
         log.info("Successfully deleted user with authId: {}", authId);

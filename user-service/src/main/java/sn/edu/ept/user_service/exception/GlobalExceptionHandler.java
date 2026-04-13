@@ -1,12 +1,8 @@
 package sn.edu.ept.user_service.exception;
 
-import io.jsonwebtoken.ExpiredJwtException;
-import io.jsonwebtoken.JwtException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.AccessDeniedException;
-import org.springframework.security.core.AuthenticationException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
@@ -31,30 +27,7 @@ public class GlobalExceptionHandler {
         return buildError(HttpStatus.CONFLICT, "Profil déjà existant", ex.getMessage());
     }
 
-    @ExceptionHandler(ExpiredJwtException.class)
-    public ResponseEntity<Map<String, Object>> handleExpiredJwtException(ExpiredJwtException ex) {
-        return buildError(HttpStatus.UNAUTHORIZED, "Token expiré", 
-            "Votre session a expiré. Veuillez vous reconnecter pour obtenir un nouveau token.");
-    }
-
-    @ExceptionHandler(JwtException.class)
-    public ResponseEntity<Map<String, Object>> handleJwtException(JwtException ex) {
-        return buildError(HttpStatus.UNAUTHORIZED, "Token invalide", 
-            "Le token fourni est invalide ou a été blacklisté. Veuillez vous reconnecter.");
-    }
-
-    @ExceptionHandler(AuthenticationException.class)
-    public ResponseEntity<Map<String, Object>> handleAuthenticationException(AuthenticationException ex) {
-        return buildError(HttpStatus.UNAUTHORIZED, "Erreur d'authentification", 
-            "Vous devez être authentifié pour accéder à cette ressource.");
-    }
-
-    @ExceptionHandler(AccessDeniedException.class)
-    public ResponseEntity<Map<String, Object>> handleAccessDeniedException(AccessDeniedException ex) {
-        return buildError(HttpStatus.FORBIDDEN, "Accès refusé", 
-            "Vous n'avez pas les permissions nécessaires pour accéder à cette ressource.");
-    }
-
+    
     @ExceptionHandler(MethodArgumentNotValidException.class)
     public ResponseEntity<Map<String, Object>> handleValidationException(
             MethodArgumentNotValidException ex) {

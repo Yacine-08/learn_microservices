@@ -23,20 +23,12 @@ public class KafkaConsumerConfig {
     @Value("${spring.kafka.bootstrap-servers}")
     private String bootstrapServers;
 
-    // Custom Jackson-based JSON deserializer
     public static class JacksonDeserializer<T> implements Deserializer<T> {
         private final ObjectMapper objectMapper = new ObjectMapper();
         private Class<T> targetType;
 
-        public JacksonDeserializer() {}
-
         public JacksonDeserializer(Class<T> targetType) {
             this.targetType = targetType;
-        }
-
-        @Override
-        public void configure(Map<String, ?> configs, boolean isKey) {
-            // Configuration can be done here if needed
         }
 
         @Override
@@ -71,11 +63,11 @@ public class KafkaConsumerConfig {
                 String, UserRegisteredEvent>();
         factory.setConsumerFactory(consumerFactory());
 
-        // Acquittement manuel → on confirme seulement si le traitement réussit
+        // acquittement manuel → on confirme seulement si le traitement réussit
         factory.getContainerProperties()
                 .setAckMode(ContainerProperties.AckMode.MANUAL_IMMEDIATE);
 
-        // Nombre de threads consommateurs
+        // nombre de threads consommateurs
         factory.setConcurrency(2);
 
         return factory;

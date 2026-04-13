@@ -22,7 +22,7 @@ public class UserEventConsumer {
 
     private final UserProfileService service;
 
-    // Ecoute le topic user.registered publié par auth-service
+    // ecoute le topic user.registered publié par auth-service
     // groupId pour faire du load balancing lorsque plusieurs instances de user-service tournent
     @KafkaListener(
             topics = "user.registered",
@@ -30,14 +30,14 @@ public class UserEventConsumer {
     )
     public void handleUserRegistered(
             @Payload UserRegisteredEvent event,
-            @Header(KafkaHeaders.RECEIVED_PARTITION) int partition,
-            @Header(KafkaHeaders.OFFSET) long offset,
+//            @Header(KafkaHeaders.RECEIVED_PARTITION) int partition,
+//            @Header(KafkaHeaders.OFFSET) long offset,
             Acknowledgment acknowledgment
     ) {
         try {
             service.createUser(event);
 
-            // Acknowledge le message -> confirmer que le message a été traité
+            // acknowledge le message -> confirmer que le message a été traité
             acknowledgment.acknowledge();
         } catch (ProfilAlreadyExistException e) {
             acknowledgment.acknowledge();
