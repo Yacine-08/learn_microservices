@@ -10,10 +10,7 @@ import org.springframework.stereotype.Component;
 import java.security.Key;
 import java.util.Date;
 
-/**
- * Utilitaire JWT du gateway — LECTURE / VALIDATION UNIQUEMENT.
- * Le gateway ne génère jamais de token.
- */
+
 @Component
 public class JwtConfig {
 
@@ -40,6 +37,7 @@ public class JwtConfig {
         return Long.parseLong(raw.toString());
     }
 
+
     public String extractRole(String token) {
         return (String) extractAllClaims(token).get("role");
     }
@@ -48,10 +46,6 @@ public class JwtConfig {
         return extractAllClaims(token).getExpiration().before(new Date());
     }
 
-    /**
-     * Retourne true si le token est syntaxiquement valide, signé correctement
-     * et non expiré.
-     */
     public boolean isTokenValid(String token) {
         try {
             return !isTokenExpired(token);

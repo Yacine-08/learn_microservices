@@ -1,4 +1,4 @@
-package sn.edu.ept.gateway.config;
+package sn.edu.ept.api_gateway.config;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;

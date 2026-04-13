@@ -1,4 +1,4 @@
-package sn.edu.ept.gateway.filter;
+package sn.edu.ept.api_gateway.filter;
 
 import lombok.Getter;
 import lombok.Setter;
@@ -13,19 +13,6 @@ import reactor.core.publisher.Mono;
 
 import java.nio.charset.StandardCharsets;
 
-/**
- * Filtre d'autorisation par rôle — s'applique APRÈS JwtAuthenticationFilter.
- *
- * Le JwtAuthenticationFilter a déjà injecté X-User-Role dans les headers.
- * Ce filtre vérifie simplement que ce rôle correspond à celui requis.
- *
- * Configuration dans application.yaml :
- *   filters:
- *     - name: JwtAuthenticationFilter
- *     - name: RoleAuthorizationFilter
- *       args:
- *         requiredRole: ADMIN
- */
 @Slf4j
 @Component
 public class RoleAuthorizationFilter
@@ -41,7 +28,7 @@ public class RoleAuthorizationFilter
             String userRole = exchange.getRequest().getHeaders().getFirst("X-User-Role");
             String required = config.getRequiredRole();
 
-            if (userRole == null || !userRole.equalsIgnoreCase(required)) {
+            if (userRole == null || !userRole.equals(required)) {
                 log.warn("[Gateway] Accès refusé — rôle={} requis={} path={}",
                         userRole, required, exchange.getRequest().getURI().getPath());
                 return forbiddenResponse(exchange.getResponse(),
@@ -65,7 +52,6 @@ public class RoleAuthorizationFilter
     @Getter
     @Setter
     public static class Config {
-        /** Rôle requis pour accéder à la route (ex: ADMIN, DRIVER) */
         private String requiredRole;
     }
 }

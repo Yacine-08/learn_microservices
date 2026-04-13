@@ -1,4 +1,4 @@
-package sn.edu.ept.gateway.exception;
+package sn.edu.ept.api_gateway.exception;
 
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.web.reactive.error.ErrorWebExceptionHandler;
