@@ -7,16 +7,12 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import sn.edu.ept.security.config.JwtService;
 import sn.edu.ept.security.config.TokenBlacklistService;
-import sn.edu.ept.security.dtos.AuthenticationRequest;
-import sn.edu.ept.security.dtos.AuthenticationResponse;
-import sn.edu.ept.security.dtos.ChangePasswordRequest;
-import sn.edu.ept.security.dtos.RegisterRequest;
-import sn.edu.ept.security.dtos.UserDTO;
+import sn.edu.ept.security.dtos.*;
 import sn.edu.ept.security.service.ConnectedUserService;
 
+import java.time.LocalDateTime;
 import java.util.Date;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
 @RestController
@@ -30,7 +26,7 @@ public class AuthenticationController {
     private final TokenBlacklistService tokenBlacklistService;
 
     @PostMapping("/register")
-    public ResponseEntity<AuthenticationResponse> register(
+    public ResponseEntity<RegisterResponse> register(
             @RequestBody RegisterRequest request
     ) {
         return ResponseEntity.ok(authenticationService.register(request));
@@ -47,7 +43,7 @@ public class AuthenticationController {
     public ResponseEntity<Map<String, String>> changePassword(@RequestBody ChangePasswordRequest request) {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         String userEmail = authentication.getName();
-        
+
         try {
             authenticationService.changePassword(userEmail, request);
             Map<String, String> response = new HashMap<>();
@@ -64,20 +60,22 @@ public class AuthenticationController {
     public ResponseEntity<Map<String, String>> logout(@RequestHeader("Authorization") String authHeader) {
         // Extract token from Authorization header
         String token = authHeader.substring(7); // Remove "Bearer " prefix
-        
+
         // Blacklist the token
         Date expirationDate = jwtService.extractExpiration(token);
-        tokenBlacklistService.blacklistToken(token, 
-            expirationDate.toInstant().atZone(java.time.ZoneId.systemDefault()).toLocalDateTime());
-        
+//        tokenBlacklistService.blacklistToken(token,
+//                expirationDate.toInstant().atZone(java.time.ZoneId.systemDefault()).toLocalDateTime());
+        tokenBlacklistService.blacklistToken(token,
+                LocalDateTime.now());
+
         // Remove user from connected users list
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         String userEmail = authentication.getName();
         connectedUserService.removeUserConnection(userEmail);
-        
+
         // Clear security context
         SecurityContextHolder.clearContext();
-        
+
         Map<String, String> response = new HashMap<>();
         response.put("message", "Déconnexion réussie");
         return ResponseEntity.ok(response);

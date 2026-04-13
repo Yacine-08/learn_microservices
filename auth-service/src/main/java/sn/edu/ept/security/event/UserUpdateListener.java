@@ -1,4 +1,4 @@
-package sn.edu.ept.security.user;
+package sn.edu.ept.security.event;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -9,6 +9,8 @@ import org.springframework.messaging.handler.annotation.Header;
 import org.springframework.messaging.handler.annotation.Payload;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import sn.edu.ept.security.user.Role;
+import sn.edu.ept.security.user.UserRepository;
 
 @Service
 @RequiredArgsConstructor

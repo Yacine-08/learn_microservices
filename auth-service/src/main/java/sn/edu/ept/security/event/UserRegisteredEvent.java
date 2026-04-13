@@ -1,4 +1,5 @@
-package sn.edu.ept.security.user;
+package sn.edu.ept.security.event;
+
 
 public record UserRegisteredEvent(
         Long authId,

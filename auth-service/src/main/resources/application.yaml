@@ -4,7 +4,6 @@ server:
 spring:
   application:
     name: auth-service
-  # connexion avec la BD
   datasource:
     url: jdbc:postgresql://localhost:5432/auth_db
     username: Yacine
@@ -13,12 +12,12 @@ spring:
   jpa:
     hibernate:
       ddl-auto: update
-      show-sql: true
-      properties:
-        hibernate:
-          format_sql: true
-      database: postgresql
-      database-platform: org.hibernate.dialect.PostgreSQLDialect
+    show-sql: true
+    properties:
+      hibernate:
+        format_sql: true
+    database: postgresql
+    database-platform: org.hibernate.dialect.PostgreSQLDialect
   kafka:
     bootstrap-servers: localhost:9092
     producer:
@@ -28,25 +27,35 @@ spring:
         spring.json.add.type.headers: false
       retries: 3
       acks: all
-#eureka:
-#  client:
-#    serviceUrl:
+    consumer:
+      group-id: auth-service-group
+      auto-offset-reset: earliest
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.springframework.kafka.support.serializer.JsonDeserializer
+      properties:
+        spring.json.trusted.packages: "sn.edu.ept.security.*,sn.edu.ept.user_service.*"
+      enable-auto-commit: false
+    listener:
+      ack-mode: MANUAL_IMMEDIATE
+
+eureka:
+  client:
+    enabled: false
+#    service-url:
 #      defaultZone: http://localhost:8761/eureka/
 #    register-with-eureka: true
 #    fetch-registry: true
 
+# URL du user-service pour les appels Feign (fallback si Eureka non dispo)
 user:
   service:
-    url: http://localhost:8081
+    url: http://localhost:8082
 
-# Kafka topics for user info communication
-kafka:
-  topic:
-    user-info-request: user-info-request
-    user-info-response: user-info-response
-    user-deleted: user-deleted
+# JWT
+jwt:
+  secret: f04f05344920d1531fdb13ff408d825c5cf5012354e64651c466d6cede25e082
 
 logging:
   level:
     sn.edu.ept.security: DEBUG
-    org.springframework.kafka: DEBUG
+    org.springframework.kafka: INFO

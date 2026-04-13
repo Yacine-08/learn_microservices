@@ -1,10 +1,9 @@
-package sn.edu.ept.security.auth;
+package sn.edu.ept.security.event;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.stereotype.Service;
-import sn.edu.ept.security.event.UserDeletedEvent;
 import sn.edu.ept.security.user.UserRepository;
 
 @Service
@@ -14,8 +13,11 @@ public class UserDeletedEventConsumer {
 
     private final UserRepository userRepository;
 
-    @KafkaListener(topics = "user.deleted", groupId = "auth-service-group",
-            containerFactory = "userDeletedEventKafkaListenerContainerFactory")
+    @KafkaListener(
+            topics = "user.deleted",
+            groupId = "auth-service-group",
+            containerFactory = "userDeletedEventKafkaListenerContainerFactory"
+    )
     public void handleUserDeleted(UserDeletedEvent event) {
         log.info("Received user deleted event for authId: {}, email: {}", event.authId(), event.email());
 

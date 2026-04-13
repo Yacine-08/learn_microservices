@@ -9,13 +9,10 @@ import org.springframework.stereotype.Service;
 import sn.edu.ept.security.client.UserServiceClient;
 import sn.edu.ept.security.config.JwtService;
 import sn.edu.ept.security.dtos.*;
+import sn.edu.ept.security.event.AuthEventPublisher;
+import sn.edu.ept.security.event.UserRegisteredEvent;
 import sn.edu.ept.security.exception.EmailAlreadyExistsException;
 import sn.edu.ept.security.user.*;
-
-import java.time.LocalDateTime;
-import java.util.*;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.stream.Collectors;
 
 @Slf4j
 @Service
@@ -28,20 +25,17 @@ public class AuthenticationService {
     private final AuthenticationManager authenticationManager;
     private final AuthEventPublisher authEventPublisher;
     private final UserServiceClient userServiceClient;
-    
-    // Suivi des utilisateurs connectés
-    private final Map<String, LocalDateTime> connectedUsers = new ConcurrentHashMap<>();
 
 
     // save credentials in auth_db
     // publish kafka event -> user-service
     // return token
-    public AuthenticationResponse register(RegisterRequest request) {
+    public RegisterResponse register(RegisterRequest request) {
 
         if (userRepository.existsByEmail(request.getEmail())) {
             throw new EmailAlreadyExistsException("Un compte avec cet email");
         }
-        
+
         var user = User.builder()
                 .email(request.email)
                 .password(passwordEncoder.encode(request.password))
@@ -61,11 +55,8 @@ public class AuthenticationService {
                 savedUser.getRole().name()
         ));
 
-        return AuthenticationResponse.builder()
+        return RegisterResponse.builder()
                 .message("Compte créé avec succès")
-                .accessToken(jwtService.generateTokenWithClaims(savedUser, savedUser.getId(), savedUser.getRole().name()))
-                .refreshToken(jwtService.generateRefreshToken(savedUser))
-                .role(savedUser.getRole().name())
                 .authId(savedUser.getId())
                 .build();
     }
@@ -85,81 +76,9 @@ public class AuthenticationService {
                 .message("Connexion réussie")
                 .accessToken(jwtService.generateTokenWithClaims(user, user.getId(), user.getRole().name()))
                 .refreshToken(jwtService.generateRefreshToken(user))
-                .role(user.getRole().name())
-                .authId(user.getId())
                 .build();
     }
 
-    public List<UserDTO> getAllUsers() {
-
-        // recuperer les credentials depuis auth_db
-        List<User> authUsers = userRepository.findAll();
-
-        if (authUsers.isEmpty()) {
-            return List.of();
-        }
-
-        // extraire tous les authIds
-        List<Long> authIds = authUsers.stream()
-                .map(User::getId)
-                .toList();
-
-        List<UserProfilDTO> profils = List.of();
-        try {
-            profils = userServiceClient.getProfilsByAuthIds(authIds);
-        } catch (Exception e) {
-            log.warn("[AUTH] user-service indisponible, réponse partielle : {}",
-                    e.getMessage());
-        }
-
-        // fusion
-        Map<Long, UserProfilDTO> profilsMap = profils.stream()
-                .collect(Collectors.toMap(
-                        UserProfilDTO::getAuthId,
-                        p -> p,
-                        (a, b) -> a
-                ));
-
-        return authUsers.stream()
-                .map(user -> {
-                    UserProfilDTO profil = profilsMap.get(user.getId());
-                    return buildUserComplet(user, profil);
-                })
-                .toList();
-    }
-
-    public UserDTO getUserById(Long authId) {
-        User user = userRepository.findById(authId)
-                .orElseThrow(() -> new RuntimeException(
-                        "Utilisateur introuvable id=" + authId));
-
-        UserProfilDTO profil = null;
-        try {
-            profil = userServiceClient.getProfilByAuthId(authId);
-        } catch (Exception e) {
-            log.warn("[AUTH] Profil non récupéré pour authId={} : {}",
-                    authId, e.getMessage());
-        }
-
-        return buildUserComplet(user, profil);
-    }
-
-    private UserDTO buildUserComplet(User user, UserProfilDTO profil) {
-        UserDTO.UserDTOBuilder builder = UserDTO.builder()
-                .authId(user.getId())
-                .email(user.getEmail())
-                .role(user.getRole().name())
-                .createdAt(user.getCreatedAt());
-
-        if (profil != null) {
-            builder
-                    .firstname(profil.getFirstname())
-                    .lastname(profil.getLastname())
-                    .phone(profil.getPhone());
-        }
-
-        return builder.build();
-    }
 
     public void changePassword(String email, ChangePasswordRequest request) {
 

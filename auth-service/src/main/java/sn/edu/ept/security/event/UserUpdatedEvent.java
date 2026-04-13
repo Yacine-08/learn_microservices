@@ -1,4 +1,4 @@
-package sn.edu.ept.security.user;
+package sn.edu.ept.security.event;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;

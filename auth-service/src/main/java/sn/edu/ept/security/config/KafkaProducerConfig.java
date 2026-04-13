@@ -9,7 +9,7 @@ import org.springframework.kafka.core.DefaultKafkaProducerFactory;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.kafka.core.ProducerFactory;
 import org.springframework.kafka.support.serializer.JsonSerializer;
-import sn.edu.ept.security.user.UserRegisteredEvent;
+import sn.edu.ept.security.event.UserRegisteredEvent;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -28,7 +28,7 @@ public class KafkaProducerConfig {
         config.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, JsonSerializer.class);
         config.put(ProducerConfig.RETRIES_CONFIG, 3);
         config.put(ProducerConfig.ACKS_CONFIG, "all");
-        
+
         return new DefaultKafkaProducerFactory<>(config);
     }
 

@@ -13,17 +13,12 @@ public class AuthenticationResponse {
     public String  message;
     public String  accessToken;
     public String  refreshToken;
-    public String  role;
-    public Long    authId;
 
-    public static AuthenticationResponse of(String message, String access, String refresh,
-                                  String role, Long authId) {
+    public static AuthenticationResponse of(String message, String access, String refresh) {
         AuthenticationResponse r = new AuthenticationResponse();
         r.message      = message;
         r.accessToken  = access;
         r.refreshToken = refresh;
-        r.role         = role;
-        r.authId       = authId;
         return r;
     }
 }
