@@ -37,7 +37,7 @@ public class SecurityConfig {
                         .requestMatchers("/api/auth/logout").authenticated()
                         .requestMatchers("/api/users/me").authenticated()
                         .requestMatchers("/api/users/{id}").hasRole("ADMIN")
-                        .requestMatchers("/api/users/{authId}").hasRole("ADMIN")
+                        .requestMatchers("/api/users/auth/{authId}").hasRole("ADMIN")
                         .requestMatchers("/api/users/internal/**").permitAll()
                         .anyRequest().authenticated()
                 )
