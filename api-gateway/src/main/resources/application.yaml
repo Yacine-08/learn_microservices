@@ -1,95 +1,3 @@
-#server:
-#  port: 8080
-#
-#spring:
-#  application:
-#    name: api-gateway
-#  cloud:
-#    gateway:
-#      routes:
-#
-#        # Routes publiques (pas de validation JWT)
-#        - id: auth-public
-#          uri: http://localhost:8081
-#          predicates:
-#            - Path=/api/auth/login, /api/auth/register
-#          filters:
-#            - RemoveRequestHeader=X-Auth-Id
-#            - RemoveRequestHeader=X-User-Role
-#            - RemoveRequestHeader=X-User-Email
-#
-#        # Routes protégées auth-service
-#        - id: auth-protected
-#          uri: http://localhost:8081
-#          predicates:
-#            - Path=/api/auth/**
-#          filters:
-#            - name: JwtAuthenticationFilter
-#
-#        # Routes internes (appelées depuis auth-service via Feign)
-#        - id: user-internal
-#          uri: http://localhost:8082
-#          predicates:
-#            - Path=/api/users/internal/**
-#          filters:
-#            - RemoveRequestHeader=X-Auth-Id
-#            - RemoveRequestHeader=X-User-Role
-#            - RemoveRequestHeader=X-User-Email
-#
-#        - id: user-me
-#          uri: http://localhost:8082
-#          predicates:
-#            - Path=/api/users/me
-#          filters:
-#            - name: JwtAuthenticationFilter
-#
-#        # Routes admin uniquement
-#        - id: user-admin
-#          uri: http://localhost:8082
-#          predicates:
-#            - Path=/api/users/all, /api/users/{id}, /api/users/auth/{authId}
-#          filters:
-#            - name: JwtAuthenticationFilter
-#            - name: RoleAuthorizationFilter
-#              args:
-#                requiredRole: ADMIN
-#
-#        - id: user-protected
-#          uri: http://localhost:8082
-#          predicates:
-#            - Path=/api/users/**
-#          filters:
-#            - name: JwtAuthenticationFilter
-#
-#      # En-têtes CORS globaux
-#      default-filters:
-#        - DedupeResponseHeader=Access-Control-Allow-Credentials Access-Control-Allow-Origin
-#
-#
-## Eureka
-#eureka:
-#  client:
-#    enabled: false
-##    service-url:
-##      defaultZone: http://localhost:8761/eureka/
-##    register-with-eureka: true
-##    fetch-registry: true
-#
-## JWT
-#jwt:
-#  secret: f04f05344920d1531fdb13ff408d825c5cf5012354e64651c466d6cede25e082
-#
-## Actuator
-#management:
-#  endpoints:
-#    web:
-#      exposure:
-#        include: health, info, gateway
-#
-#logging:
-#  level:
-#    sn.edu.ept.gateway: DEBUG
-#    org.springframework.cloud.gateway: INFO
 server:
   port: 8080
 
@@ -100,14 +8,11 @@ spring:
     gateway:
       routes:
 
-        # ── Routes publiques auth — PAS de filtre JWT ────────────────────────
         - id: auth-public
           uri: http://localhost:8081
           predicates:
             - Path=/api/auth/login, /api/auth/register
-          # Pas de filtre du tout — laisser passer sans token
 
-        # ── Routes protégées auth ────────────────────────────────────────────
         - id: auth-protected
           uri: http://localhost:8081
           predicates:
@@ -115,22 +20,18 @@ spring:
           filters:
             - name: JwtAuthenticationFilter
 
-        # ── Routes internes user — appelées par Feign, PAS de JWT ───────────
         - id: user-internal
           uri: http://localhost:8082
           predicates:
             - Path=/api/users/internal/**
-          # Pas de filtre — appels Feign internes entre services
 
-        # ── Mon profil — JWT obligatoire ────────────────────────────────────
         - id: user-me
           uri: http://localhost:8082
           predicates:
             - Path=/api/users/me
           filters:
-            - name: JwtAuthenticationFilter   # injecte X-Auth-Id, X-User-Role, X-User-Email
+            - name: JwtAuthenticationFilter
 
-        # ── Routes admin — JWT + rôle ADMIN ─────────────────────────────────
         - id: user-admin
           uri: http://localhost:8082
           predicates:
@@ -141,11 +42,24 @@ spring:
               args:
                 requiredRole: ADMIN
 
-        # ── Toutes les autres routes user — JWT obligatoire ─────────────────
         - id: user-protected
           uri: http://localhost:8082
           predicates:
             - Path=/api/users/**
+          filters:
+            - name: JwtAuthenticationFilter
+
+        - id: parcel-service
+          uri: http://localhost:8083
+          predicates:
+            - Path=/api/parcels/**
+          filters:
+            - name: JwtAuthenticationFilter
+
+        - id: order-service
+          uri: http://localhost:8084
+          predicates:
+            - Path=/api/orders/**
           filters:
             - name: JwtAuthenticationFilter
 
@@ -167,5 +81,5 @@ management:
 
 logging:
   level:
-    sn.edu.ept.gateway: DEBUG
-    org.springframework.cloud.gateway: DEBUG   # ← mettre DEBUG pour voir le routing
+    sn.edu.ept.api_gateway: DEBUG
+    org.springframework.cloud.gateway: INFO
